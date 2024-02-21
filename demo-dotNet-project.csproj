@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>demo_dotNet_project</RootNamespace>
+    <VersionPrefix>0.1.0</VersionPrefix>
   </PropertyGroup>
 
 </Project>
