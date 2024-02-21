@@ -1,0 +1,7 @@
+/home/runner/work/demo-dotNet-project/demo-dotNet-project/bin/Debug/net7.0/publish/demo-dotNet-project
+/home/runner/work/demo-dotNet-project/demo-dotNet-project/bin/Debug/net7.0/publish/appsettings.Development.json
+/home/runner/work/demo-dotNet-project/demo-dotNet-project/bin/Debug/net7.0/publish/appsettings.json
+/home/runner/work/demo-dotNet-project/demo-dotNet-project/bin/Debug/net7.0/publish/demo-dotNet-project.dll
+/home/runner/work/demo-dotNet-project/demo-dotNet-project/bin/Debug/net7.0/publish/demo-dotNet-project.deps.json
+/home/runner/work/demo-dotNet-project/demo-dotNet-project/bin/Debug/net7.0/publish/demo-dotNet-project.runtimeconfig.json
+/home/runner/work/demo-dotNet-project/demo-dotNet-project/bin/Debug/net7.0/publish/demo-dotNet-project.pdb
