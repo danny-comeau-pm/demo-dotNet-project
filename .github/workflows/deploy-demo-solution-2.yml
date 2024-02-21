@@ -41,6 +41,7 @@ jobs:
         - name: Checkout Repository Via Tag
           uses: actions/checkout@v3
           with:
+            repository: 'danny-comeau-pm/demo-dotNet-project'
             ref: ${{ env.VERSION_TAG }}
           
         - name: Setup .NET Core
