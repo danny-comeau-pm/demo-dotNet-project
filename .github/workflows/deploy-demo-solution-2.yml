@@ -1,0 +1,63 @@
+name: Deployment of Plante Moran Code Base 2
+run-name: Deploy ${{ inputs.environment }} Environment for Plante Moran Code Base with Version ${{ inputs.versionTag }} by ${{ github.actor }}
+on: 
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Deploy to Environment'
+        required: true
+        default: 'dev'
+        type: string
+      versionTag:
+        description: 'Release Tag to Publish'
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      environment:
+          description: 'Deploy to Environment'
+          required: true
+          default: 'dev'
+          type: choice
+          options:
+          - dev
+          - test
+          - stage
+          - prod
+      versionTag:
+        description: 'Release Tag to Publish'
+        required: true
+        type: string
+env:
+    ENVIRONMENT: ${{ inputs.environment }}
+    VERSION_TAG: ${{ inputs.versionTag }}
+jobs:
+    build-and-deploy-react-app:
+        runs-on: ubuntu-latest
+        strategy:
+          matrix:
+            dotNet-version: [ 7.0 ]
+        steps:
+        - name: Checkout Repository Via Tag
+          uses: actions/checkout@v3
+          with:
+            ref: ${{ env.VERSION_TAG }}
+          
+        - name: Setup .NET Core
+          uses: actions/setup-dotnet@v1
+          with:
+            node-version: ${{ matrix.dotNet-version }}
+
+        - name: Variable Subsitution
+          run: |
+            echo "Variable substitution happens here."
+            echo "My code example is commented out."
+        - name: Build and Publish
+          run: |
+            dotnet restore
+            dotnet build 
+            dotnet publish
+        - name: Deploy to Azure
+          run: |
+            echo "Hello, world"
+            ls 
