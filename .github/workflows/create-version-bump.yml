@@ -1,0 +1,52 @@
+name: Create Version Bump for .NET Code Base
+run-name: Create Version Bump for .NET Code Base with Version v${{ inputs.versionTag }} by ${{ github.actor }}
+on: 
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch Name'
+        required: true
+        type: string
+      versionTag:
+        description: 'Create Version'
+        required: true
+        type: string
+env:
+    BRANCH: ${{ inputs.branch }}
+    VERSION_TAG: ${{ inputs.versionTag }}
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+jobs:
+    build-and-deploy-dotnet-app:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v3
+          with: 
+            fetch-depth: 0
+            token: ${{ secrets.GITHUB_TOKEN }}
+          
+        - name: Setup .NET Core
+          uses: actions/setup-dotnet@v1
+          with:
+            dotnet-version: '7.0' # Specify your .NET version here
+
+        - name: Install dependencies
+          run: dotnet restore
+
+        - name: Version Bump in .csproj
+          run: |
+            sed -i 's|<VersionPrefix>.*</VersionPrefix>|<VersionPrefix>${{ env.VERSION_TAG }}</VersionPrefix>|g' *.csproj
+
+        - name: Build and Publish
+          run: |
+            dotnet build 
+            dotnet publish
+
+        - name: Commit Changes
+          run: |
+            git checkout ${{ env.BRANCH }}
+            git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+            git config --global user.name ${{ github.actor }}
+            git add .
+            git commit -m "Bump version to ${{ env.VERSION_TAG }}"
+            git push
