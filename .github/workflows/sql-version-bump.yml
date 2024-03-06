@@ -20,6 +20,10 @@ env:
     DB_USERNAME: ${{ secrets.DB_USERNAME }}
     DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
     DB_NAME: ${{ secrets.DB_NAME }}
+    TARGET_DB_SERVER: <Server Name>
+    TARGET_DB_NAME: <DB Name>
+    TARGET_DB_USER_NAME: <User Name>
+    TARGET_DB_USER_PASSWORD: ${{ secrets.TARGET_DB_USER_PASSWORD }}
 jobs:
     bump-sql-version-and-update-db:
         runs-on: ubuntu-latest
@@ -36,7 +40,7 @@ jobs:
 
         - name: Update SQL procedure in the database
           run: |
-            sqlcmd -S ${{ env.DB_SERVER }} -U ${{ env.DB_USERNAME }} -P ${{ env.DB_PASSWORD }} -d ${{ env.DB_NAME }} -Q "ALTER VIEW [meta].[Version] AS SELECT '${{ env.VERSION_TAG }}' AS [Version];"
+            sqlcmd -S ${{ env.TARGET_DB_SERVER }} -U ${{ env.TARGET_DB_USER_NAME }} -P ${{ env.TARGET_DB_USER_PASSWORD }} -d ${{ env.TARGET_DB_NAME }} -Q "ALTER VIEW [meta].[Version] AS SELECT '${{ env.VERSION_TAG }}' AS [Version];"
 
         - name: Create New Branch
           run: |
