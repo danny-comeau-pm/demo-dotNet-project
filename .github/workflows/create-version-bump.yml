@@ -1,10 +1,10 @@
-name: Create Version Bump for .NET Code Base
-run-name: Create Version Bump for .NET Code Base with Version v${{ inputs.versionTag }} by ${{ github.actor }}
+name: .NET Version Bump
+run-name: Bump version to v${{ inputs.versionTag }} by ${{ github.actor }}
 on: 
   workflow_dispatch:
     inputs:
-      branch:
-        description: 'Branch Name'
+      initials:
+        description: 'Developers Initials'
         required: true
         type: string
       versionTag:
@@ -12,7 +12,8 @@ on:
         required: true
         type: string
 env:
-    BRANCH: ${{ inputs.branch }}
+    BRANCH: feature/${{ inputs.initials }}-version-${{ inputs.versionTag }}
+    COMMIT_MESSAGE: Bump version to v${{ inputs.versionTag }}
     VERSION_TAG: ${{ inputs.versionTag }}
     GITHUB_TOKEN: ${{ secrets.TEST_COMMIT_TOKEN }}
 jobs:
@@ -24,23 +25,14 @@ jobs:
           with: 
             fetch-depth: 0
             token: ${{ secrets.TEST_COMMIT_TOKEN }}
-          
-        - name: Setup .NET Core
-          uses: actions/setup-dotnet@v1
-          with:
-            dotnet-version: '7.0' # Specify your .NET version here
-
-        - name: Install dependencies
-          run: dotnet restore
 
         - name: Version Bump in .csproj
           run: |
             sed -i 's|<VersionPrefix>.*</VersionPrefix>|<VersionPrefix>${{ env.VERSION_TAG }}</VersionPrefix>|g' *.csproj
 
-        - name: Build and Publish
+        - name: Create New Branch
           run: |
-            dotnet build 
-            dotnet publish
+            git checkout -b ${{ env.BRANCH }}
 
         - name: Commit Changes
           run: |
@@ -50,3 +42,10 @@ jobs:
             git add .
             git commit -m "Bump version to ${{ env.VERSION_TAG }}"
             git push
+
+        - name: Create Pull Request
+          run: >
+            gh pr create
+            --base main
+            --head ${{ env.BRANCH }}
+            --fill
