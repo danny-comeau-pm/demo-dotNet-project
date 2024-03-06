@@ -1,0 +1,58 @@
+name: SQL Version Bump
+run-name: Bump version to v${{ inputs.versionTag }} by ${{ github.actor }}
+on: 
+  workflow_dispatch:
+    inputs:
+      initials:
+        description: 'Developers Initials'
+        required: true
+        type: string
+      versionTag:
+        description: 'Create Version'
+        required: true
+        type: string
+env:
+    BRANCH: feature/${{ inputs.initials }}-version-${{ inputs.versionTag }}
+    COMMIT_MESSAGE: Bump version to v${{ inputs.versionTag }}
+    VERSION_TAG: ${{ inputs.versionTag }}
+    GITHUB_TOKEN: ${{ secrets.TEST_COMMIT_TOKEN }}
+    DB_SERVER: ${{ secrets.DB_SERVER }}
+    DB_USERNAME: ${{ secrets.DB_USERNAME }}
+    DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+    DB_NAME: ${{ secrets.DB_NAME }}
+jobs:
+    bump-sql-version-and-update-db:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v3
+          with: 
+            fetch-depth: 0
+            token: ${{ secrets.TEST_COMMIT_TOKEN }}
+        
+        - name: Bump Version in SQL file
+          run: |
+            sed -i "s|SELECT '.*' AS \[Version\];|SELECT '${{ env.VERSION_TAG }}' AS [Version];|g" path/to/your/sqlfile.sql
+
+        - name: Update SQL procedure in the database
+          run: |
+            sqlcmd -S ${{ env.DB_SERVER }} -U ${{ env.DB_USERNAME }} -P ${{ env.DB_PASSWORD }} -d ${{ env.DB_NAME }} -Q "ALTER VIEW [meta].[Version] AS SELECT '${{ env.VERSION_TAG }}' AS [Version];"
+
+        - name: Create New Branch
+          run: |
+            git checkout -b ${{ env.BRANCH }}
+
+        - name: Commit Changes
+          run: |
+            git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+            git config --global user.name ${{ github.actor }}
+            git add path/to/your/sqlfile.sql
+            git commit -m "${{ env.COMMIT_MESSAGE }}"
+            git push --set-upstream origin ${{ env.BRANCH }}
+
+        - name: Create Pull Request
+          run: >
+            gh pr create
+            --base main
+            --head ${{ env.BRANCH }}
+            --fill
