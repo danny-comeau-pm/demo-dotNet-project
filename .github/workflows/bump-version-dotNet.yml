@@ -72,12 +72,16 @@ jobs:
 
 
           - name: Generate new version number
-            id: generate-new-version-number
-            run: |
-              bumpType=${{ env.BUMP_TYPE }}
-              versionMajor="${{ steps.get-current-version-numbers.outputs.versionMajor }}"
-              versionMinor="${{ steps.get-current-version-numbers.outputs.versionMinor }}"
-              versionPatch="${{ steps.get-current-version-numbers.outputs.versionPatch }}"
+                  id: generate-new-version-number
+                  env:
+                    VERSION_MAJOR: ${{ steps.get-current-version-numbers.outputs.versionMajor }}
+                    VERSION_MINOR: ${{ steps.get-current-version-numbers.outputs.versionMinor }}
+                    VERSION_PATCH: ${{ steps.get-current-version-numbers.outputs.versionPatch }}
+                  run: |
+                    bumpType=${{ env.BUMP_TYPE }}
+                    versionMajor="${{ env.VERSION_MAJOR }}"
+                    versionMinor="${{ env.VERSION_MINOR }}"
+                    versionPatch="${{ env.VERSION_PATCH }}"
 
           # bump the version number based on the bump type
           # - major: increment the major version number and set the minor and patch version numbers to 0
