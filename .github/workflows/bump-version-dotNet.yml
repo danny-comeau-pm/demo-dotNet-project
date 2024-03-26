@@ -1,0 +1,163 @@
+name: Bump Version - .NET Project
+
+run-name: Bump version - requested by ${{ github.actor }}
+
+on:
+  # allow the workflow to be triggered manually
+  workflow_dispatch:
+    inputs:
+      bumpType:
+        description: 'Bump Type (major, minor, patch)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+  # allow the workflow to be called from another workflow
+  workflow_call:
+    inputs:
+      bumpType:
+        required: true
+        type: string
+
+env:
+  ACTOR_USER_NAME: ${{ github.actor }} # --------------------------------------------- the name of the user who triggered the workflow
+  BUMP_TYPE: ${{ inputs.bumpType }} # ------------------------------------------------ the type of version bump (major, minor, or patch)
+  REPO_NAME: ${{ github.event.repository.name }} # ----------------------------------- the name of the repository (name only, without owner) e.g. for plantemoran-appdev/my-repo, this would be my-repo
+  REPO_OWNER: ${{ github.repository_owner }} # --------------------------------------- the owner of the repository (owner or organization name) e.g. for plantemoran-appdev/my-repo, this would be plantemoran-appdev
+  GITHUB_BOT_USER_NAME: github-actions[bot] # ---------------------------------------- the name of the GitHub bot user
+  GITHUB_BOT_USER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com # ----- the email address of the GitHub bot user
+
+jobs:
+  # generate variables needed for the version bump
+  # this includes:
+  # - new branch name (e.g. feature/username-version-bump--1.2.4)
+  # - new version name (e.g. v1.2.4)
+  # - new version number (e.g. 1.2.4)
+  generate-variables:
+    name: Generate variables
+    runs-on: ubuntu-latest
+    outputs:
+      newBranchName: ${{ steps.generate-branch-name.outputs.newBranchName }}
+      newVersionName: ${{ steps.generate-new-version-number.outputs.newVersionName }}
+      newVersionNumber: ${{ steps.generate-new-version-number.outputs.newVersionNumber }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get current version numbers
+        id: get-current-version-numbers
+        run: |
+          # Find the .csproj file
+          csprojFile=$(find . -type f -name "*.csproj" | head -n 1)
+          echo "CSProj file: $csprojFile"
+      
+          # Use Python to extract the version number from the .csproj file
+          currentVersion=$(cat "$csprojFile" | python3 -c "import sys; import xml.etree.ElementTree as ET; print(ET.parse(sys.stdin).find('.//VersionPrefix').text)")
+      
+          # split the current version number into individual major, minor, and patch components
+          IFS='.' read -r versionMajor versionMinor versionPatch <<< "$currentVersion"
+      
+          # output the current version number and its parts
+          echo "currentVersion=$currentVersion" >> "$GITHUB_ENV"
+          echo "versionMajor=$versionMajor" >> "$GITHUB_ENV"
+          echo "versionMinor=$versionMinor" >> "$GITHUB_ENV"
+          echo "versionPatch=$versionPatch" >> "$GITHUB_ENV"
+
+
+      - name: Generate new version number
+        id: generate-new-version-number
+        env:
+          VERSION_MAJOR: ${{ steps.get-current-version-numbers.outputs.versionMajor }}
+          VERSION_MINOR: ${{ steps.get-current-version-numbers.outputs.versionMinor }}
+          VERSION_PATCH: ${{ steps.get-current-version-numbers.outputs.versionPatch }}
+        run: |
+          bumpType=${{ env.BUMP_TYPE }}
+          versionMajor="${{ env.VERSION_MAJOR }}"
+          versionMinor="${{ env.VERSION_MINOR }}"
+          versionPatch="${{ env.VERSION_PATCH }}"
+
+          # bump the version number based on the bump type
+          # - major: increment the major version number and set the minor and patch version numbers to 0
+          # - minor: increment the minor version number and set the patch version number to 0
+          # - patch: increment the patch version number
+          # - otherwise: print an error message and exit with a non-zero status code
+          if [ "$bumpType" = "major" ]; then
+            newVersionNumber="$((versionMajor + 1)).0.0"
+          elif [ "$bumpType" = "minor" ]; then
+            newVersionNumber="$versionMajor.$((versionMinor + 1)).0"
+          elif [ "$bumpType" = "patch" ]; then
+            newVersionNumber="$versionMajor.$versionMinor.$((versionPatch + 1))"
+          else
+            echo "ERROR: Invalid version bump type!"
+            exit 1
+          fi
+
+          # output the new version number and name
+          echo "newVersionNumber=$newVersionNumber" >> "$GITHUB_OUTPUT"
+          echo "newVersionName=v$newVersionNumber" >> "$GITHUB_OUTPUT"
+
+      - name: Generate branch name
+        id: generate-branch-name
+        run: |
+          # generate the name of the new branch
+          # this will be used to push the updated csproj file and create a pull request
+          echo "newBranchName=feature/${{ env.ACTOR_USER_NAME }}-version-bump--${{ steps.generate-new-version-number.outputs.newVersionNumber }}" \
+          >> "$GITHUB_OUTPUT"
+
+      # this is technically not necessary, but it's useful for debugging
+      - name: Print variables to console
+        run: |
+          echo current version is: ${{ steps.get-current-version-numbers.outputs.currentVersion }}
+          echo major version is: ${{ steps.get-current-version-numbers.outputs.versionMajor }}
+          echo minor version is: ${{ steps.get-current-version-numbers.outputs.versionMinor }}
+          echo patch version is: ${{ steps.get-current-version-numbers.outputs.versionPatch }}
+          echo new version number is: ${{ steps.generate-new-version-number.outputs.newVersionNumber }}
+          echo new version name is: ${{ steps.generate-new-version-number.outputs.newVersionName }}
+          echo new branch name is: ${{ steps.generate-branch-name.outputs.newBranchName }}
+
+  bump-version-and-create-pr:
+    name: Bump version and create pull request
+    runs-on: ubuntu-latest
+    needs: generate-variables
+    env:
+      NEW_BRANCH_NAME: ${{ needs.generate-variables.outputs.newBranchName }}
+      NEW_VERSION_NAME: ${{ needs.generate-variables.outputs.newVersionName }}
+      NEW_VERSION_NUMBER: ${{ needs.generate-variables.outputs.newVersionNumber }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Update .csproj version
+        run: |
+          # Find the .csproj file
+          csprojFile=$(find . -type f -name "*.csproj" | head -n 1)
+          echo "CSProj file: $csprojFile"
+      
+          # Use Python to update the version number in the .csproj file
+          python3 -c "import sys; import xml.etree.ElementTree as ET; tree = ET.parse('$csprojFile'); root = tree.getroot(); ns = {'ns': 'http://schemas.microsoft.com/developer/msbuild/2003'}; version = root.find('.//ns:VersionPrefix', ns); version.text = '${{ env.NEW_VERSION_NUMBER }}'; tree.write('$csprojFile')" 
+
+
+      - name: Commit and push changes
+        run: |
+          # create a new branch with the newly generated branch name
+          # this will be used to commit the updated package.json and package-lock.json files
+          git config --global user.name ${{ env.GITHUB_BOT_USER_NAME }}
+          git config --global user.email ${{ env.GITHUB_BOT_USER_EMAIL }}
+          git checkout -b ${{ env.NEW_BRANCH_NAME }}
+          git add .
+          git commit -m "Bump version to ${{ env.NEW_VERSION_NUMBER }}"
+          git push --set-upstream origin ${{ env.NEW_BRANCH_NAME }}
+
+      - name: Create pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base develop \
+            --head ${{ env.NEW_BRANCH_NAME }} \
+            --title "Bump version to ${{ env.NEW_VERSION_NAME }}" \
+            --body "Bump version to ${{ env.NEW_VERSION_NAME }} by @${{ env.ACTOR_USER_NAME }}"
