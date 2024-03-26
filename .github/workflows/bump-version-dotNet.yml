@@ -56,7 +56,7 @@ jobs:
           echo "CSProj file: $csprojFile"
       
           # Get the current version number from the .csproj file
-          currentVersion=$(cat "$csprojFile" | grep '<VersionPrefix>' | head -n 1 | sed 's/.*<Version>\(.*\)<\/Version>.*/\1/')
+          currentVersion=$(cat "$csprojFile" | grep '<VersionPrefix>' | head -n 1 | sed 's/.*<Version>\(.*\)<\/VersionPrefix>.*/\1/')
       
           # split the current version number into individual major, minor, and patch components
           versionArray=(${currentVersion//./ })
