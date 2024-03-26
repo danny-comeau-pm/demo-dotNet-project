@@ -55,11 +55,14 @@ jobs:
           csprojFile=$(find . -type f -name "*.csproj" | head -n 1)
           echo "CSProj file: $csprojFile"
       
-          # Use Python to extract the version number from the .csproj file
-          currentVersion=$(cat "$csprojFile" | python3 -c "import sys; import xml.etree.ElementTree as ET; print(ET.parse(sys.stdin).find('.//VersionPrefix').text)")
+          # Get the current version number from the .csproj file
+          currentVersion=$(cat "$csprojFile" | grep '<VersionPrefix>' | head -n 1 | sed 's/.*<Version>\(.*\)<\/Version>.*/\1/')
       
           # split the current version number into individual major, minor, and patch components
-          IFS='.' read -r versionMajor versionMinor versionPatch <<< "$currentVersion"
+          versionArray=(${currentVersion//./ })
+          versionMajor="${versionArray[0]}"
+          versionMinor="${versionArray[1]}"
+          versionPatch="${versionArray[2]}"
       
           # output the current version number and its parts
           echo "currentVersion=$currentVersion" >> "$GITHUB_ENV"
