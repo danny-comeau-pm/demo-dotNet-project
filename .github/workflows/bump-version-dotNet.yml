@@ -63,6 +63,10 @@ jobs:
           versionMajor="${versionArray[0]}"
           versionMinor="${versionArray[1]}"
           versionPatch="${versionArray[2]}"
+
+          echo $versionMajor
+          echo $versionMinor
+          echo $versionPatch
       
           # output the current version number and its parts
           echo "currentVersion=$currentVersion" >> "$GITHUB_ENV"
