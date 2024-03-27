@@ -137,8 +137,18 @@ jobs:
           csprojFile=$(find . -type f -name "*.csproj" | head -n 1)
           echo "CSProj file: $csprojFile"
       
-          # Use Python to update the version number in the .csproj file
-          python3 -c "import sys; import xml.etree.ElementTree as ET; tree = ET.parse('$csprojFile'); root = tree.getroot(); ns = {'ns': 'http://schemas.microsoft.com/developer/msbuild/2003'}; version = root.find('.//ns:VersionPrefix', ns); version.text = '${{ env.NEW_VERSION_NUMBER }}'; tree.write('$csprojFile')" 
+          # Update the version number in the .csproj file
+          newVersion="${{ env.NEW_VERSION_NUMBER }}"
+          if [[ -z "$newVersion" ]]; then
+            echo "New version number is empty!"
+            exit 1
+          fi
+      
+          echo "Updating version to $newVersion in $csprojFile"
+          sed -i "s/<VersionPrefix>.*<\/VersionPrefix>/<VersionPrefix>$newVersion<\/VersionPrefix>/" "$csprojFile"
+          
+          # Optional: Check the result (for debugging)
+          grep "<VersionPrefix>" "$csprojFile" 
 
 
       - name: Commit and push changes
