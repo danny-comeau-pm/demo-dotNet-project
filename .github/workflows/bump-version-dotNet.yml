@@ -77,21 +77,13 @@ jobs:
 
       - name: Generate new version number
         id: generate-new-version-number
-        env:
-          VERSION_MAJOR: ${{ steps.get-current-version-numbers.outputs.versionMajor }}
-          VERSION_MINOR: ${{ steps.get-current-version-numbers.outputs.versionMinor }}
-          VERSION_PATCH: ${{ steps.get-current-version-numbers.outputs.versionPatch }}
         run: |
           bumpType=${{ env.BUMP_TYPE }}
-          versionMajor="${{ env.VERSION_MAJOR }}"
-          versionMinor="${{ env.VERSION_MINOR }}"
-          versionPatch="${{ env.VERSION_PATCH }}"
-
+          versionMajor="${{ env.versionMajor }}"
+          versionMinor="${{ env.versionMinor }}"
+          versionPatch="${{ env.versionPatch }}"
+      
           # bump the version number based on the bump type
-          # - major: increment the major version number and set the minor and patch version numbers to 0
-          # - minor: increment the minor version number and set the patch version number to 0
-          # - patch: increment the patch version number
-          # - otherwise: print an error message and exit with a non-zero status code
           if [ "$bumpType" = "major" ]; then
             newVersionNumber="$((versionMajor + 1)).0.0"
           elif [ "$bumpType" = "minor" ]; then
@@ -102,10 +94,11 @@ jobs:
             echo "ERROR: Invalid version bump type!"
             exit 1
           fi
-
+      
           # output the new version number and name
           echo "newVersionNumber=$newVersionNumber" >> "$GITHUB_OUTPUT"
           echo "newVersionName=v$newVersionNumber" >> "$GITHUB_OUTPUT"
+
 
       - name: Generate branch name
         id: generate-branch-name
