@@ -52,7 +52,7 @@ jobs:
         id: get-current-version-numbers
         run: |
           # Find the .csproj file
-          csprojFile=$(find . -type f -name "*.csproj" | head -n 1)
+          csprojFile=$(find ./src -type f -name "*.csproj" | head -n 1)
           echo "CSProj file: $csprojFile"
       
           # Get the current version number from the .csproj file
@@ -134,7 +134,7 @@ jobs:
       - name: Update .csproj version
         run: |
           # Find the .csproj file
-          csprojFile=$(find . -type f -name "*.csproj" | head -n 1)
+          csprojFile=$(find ./src -type f -name "*.csproj" | head -n 1)
           echo "CSProj file: $csprojFile"
       
           # Update the version number in the .csproj file
