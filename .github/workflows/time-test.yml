@@ -18,6 +18,7 @@ jobs:
 
       - name: Get Current EST Time
         id: est-time
+        shell: pwsh
         run: |
           # Get current UTC time and convert it to Eastern Standard Time (EST)
           $utcNow = (Get-Date).ToUniversalTime()
