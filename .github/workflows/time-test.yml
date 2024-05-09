@@ -1,5 +1,5 @@
 name: Count Controllers and Operations
-run-name: Run at ${{ steps.est-time.outputs.estTime }} EST
+run-name: Run at ${{ github.created_at }}
 
 on:
   # allow the workflow to be triggered manually
@@ -16,19 +16,3 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
-
-      - name: Get Current EST Time
-        id: est-time
-        shell: pwsh
-        run: |
-          # Get current UTC time and convert it to Eastern Standard Time (EST)
-          $utcNow = (Get-Date).ToUniversalTime()
-          $estZone = [System.TimeZoneInfo]::FindSystemTimeZoneById("Eastern Standard Time")
-          $estNow = [System.TimeZoneInfo]::ConvertTimeFromUtc($utcNow, $estZone)
-          Write-Output "::set-output name=estTime::$(($estNow).ToString('yyyy-MM-dd HH:mm:ss'))"
-
-      - name: Set Run Name with EST Time
-        run: echo "Current Run Name ${{ github.workflow }} at ${{ steps.est-time.outputs.estTime }} EST"
-
-    outputs:
-      run-name: "Run at ${{ steps.est-time.outputs.estTime }} EST"
