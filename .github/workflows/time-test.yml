@@ -1,4 +1,5 @@
 name: Count Controllers and Operations
+run-name: Run at ${{ steps.est-time.outputs.estTime }} EST
 
 on:
   # allow the workflow to be triggered manually
