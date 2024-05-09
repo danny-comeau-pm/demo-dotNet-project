@@ -1,7 +1,5 @@
 name: Count Controllers and Operations
 
-run-name: Report Pulled on - requested by ${{ github.actor }}
-
 on:
   # allow the workflow to be triggered manually
   workflow_dispatch:
